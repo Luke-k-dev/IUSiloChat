@@ -1,69 +1,70 @@
-#Back-End Documentation
 
-##Global Functions
+# Back-End Documentation
 
-    ```
-    obfuscate(data)
-        Takes any object and converts it into an obfuscated string.
-        args: any type data
-        returns: string
+## Global Functions
 
-    deobfuscate(obj)
-        Deobfuscates an obfuscated string
-        args: string obj
-        returns: any type
-    ```
+```
+obfuscate(data)
+    Takes any object and converts it into an obfuscated string.
+    args: any type data
+    returns: string
 
-##Classes
+deobfuscate(obj)
+    Deobfuscates an obfuscated string
+    args: string obj
+    returns: any type
+```
 
-   ###ReadFile
+## Classes
 
-        ```
-        ReadFile(filepath)
-            args: string filepath
+### ReadFile
 
-        read()
-            Reads all events from the file
-            args: int num
-            returns: list
-        ```
+```
+ReadFile(filepath)
+    args: string filepath
 
-    ###WriteFile
+read()
+    Reads all events from the file
+    args: int num
+    returns: list
+```
 
-        ```
-        WriteFile(filepath)
-            args: string filepath
+### WriteFile
 
-        write(events)
-            Writes every event in events to the file.
-            args: list events
-        ```
+```
+WriteFile(filepath)
+    args: string filepath
 
-    ###Client
+write(events)
+    Writes every event in events to the file.
+    args: list events
+```
 
-        ```
-        Client(username)
-            args: string username
+### Client
 
-        start()
-            Starts the client on a new thread.
+```
+Client(username)
+    args: string username
 
-        end()
-            Ends the client thread.
+start()
+    Starts the client on a new thread.
 
-        run()
-            The function called by start() on a new thread.
+end()
+    Ends the client thread.
 
-        send_event(event)
-            Sends the given event.
-            args: dict event
+run()
+    The function called by start() on a new thread.
 
-        send_message(user, text)
-            Wrapper function for send_event() to send a message event with the given message text and username.
-            
-        get_events(num = 0)
-            Returns a list containing all of the new events since the last call, with an optional maximum num.
-            keyword args: int num
-            returns: list
-        ```
+send_event(event)
+    Sends the given event.
+    args: dict event
+
+send_message(user, text)
+    Wrapper function for send_event() to send a message event with the given message text and username.
+
+get_events(num = 0)
+    Returns a list containing all of the new events since the last call, with an optional maximum num.
+    keyword args: int num
+    returns: list
+```
 
