@@ -21,7 +21,12 @@ def deobfuscate(obj):
     for i in range(len(data)):
         data[i] = (data[i] - shift(i)) % 256
 
-    return json.loads(bytes(data).decode("utf-8"))
+    try:
+        events = json.loads(bytes(data).decode("utf-8"))
+    except json.decoder.JSONDecodeError:
+        return([{"type": "error", "ts": time.time(), "text": "JSON decode error on bytestring '" + bytes(data).decode("utf-8") + "'"}])
+
+    return events
 
 class ReadFile:
 

@@ -5,10 +5,13 @@ from tkinter import *
 import platform
 
 # input the directory to store the files here
-DIR = "/home/username/chat"
+DIR = "/home/jamac/chat"
 
 def message_in(event):
-    chatClient.send_message(entry.get())
+    msg = entry.get()
+    if len(msg) > 0:
+        chatClient.send_message(msg)
+
     entry.delete(0, END)
 
 def show_messages():
@@ -27,6 +30,7 @@ def show_messages():
         if string:
             text.config(state=NORMAL)
             text.insert(END, string + "\n")
+            text.see("end")
             text.config(state=DISABLED)
 
     root.after(100, show_messages)
