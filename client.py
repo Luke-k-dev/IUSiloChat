@@ -22,11 +22,9 @@ def deobfuscate(obj):
         data[i] = (data[i] - shift(i)) % 256
 
     try:
-        events = json.loads(bytes(data).decode("utf-8"))
+        return json.loads(bytes(data).decode("utf-8"))
     except json.decoder.JSONDecodeError:
-        return([{"type": "error", "ts": time.time(), "text": "JSON decode error on bytestring '" + bytes(data).decode("utf-8") + "'"}])
-
-    return events
+        return False
 
 class ReadFile:
 
@@ -35,8 +33,10 @@ class ReadFile:
 
     def read(self):
         if os.path.isfile(self.fp):
-            with open(self.fp, "rb") as f:
-                allEvents = deobfuscate(f.read())
+            allEvents = False
+            while allEvents == False:
+                with open(self.fp, "rb") as f:
+                    allEvents = deobfuscate(f.read())
 
             return allEvents
 
