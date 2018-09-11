@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os, time, ujson, glob, threading, queue, math
 
 # filename prefix
@@ -12,18 +10,18 @@ def shift(val):
     return int((1337 * math.tan(val) % 1) * 256)
 
 def obfuscate(data):
-    obj = list(ujson.dumps(data))
+    obj = list(ujson.dumps(data).replace("\\/", "/").encode("utf-16"))
     for i in range(len(obj)):
-        obj[i] = chr((ord(obj[i]) + shift(i)) % 256)
+        obj[i] = (obj[i] + shift(i)) % 256
 
-    return "".join(obj)
+    return bytes(obj)
 
 def deobfuscate(obj):
-    data = []
-    for i in range(len(obj)):
-        data.append(chr((ord(obj[i]) - shift(i)) % 256))
+    data = list(obj)
+    for i in range(len(data)):
+        data[i] = (data[i] - shift(i)) % 256
 
-    return ujson.loads("".join(data))
+    return ujson.loads(bytes(data).decode("utf-16"))
 
 class ReadFile:
 
@@ -32,7 +30,7 @@ class ReadFile:
 
     def read(self):
         if os.path.isfile(self.fp):
-            with open(self.fp, "r") as f:
+            with open(self.fp, "rb") as f:
                 allEvents = deobfuscate(f.read())
 
             return allEvents
@@ -45,12 +43,12 @@ class WriteFile:
     def __init__(self, filepath):
         self.fp = filepath
         if not os.path.isfile(self.fp):
-            with open(self.fp, "w") as f:
+            with open(self.fp, "wb") as f:
                 f.write(obfuscate([]))
 
     def write(self, events):
         if os.path.isfile(self.fp):
-            with open(self.fp, "r") as f:
+            with open(self.fp, "rb") as f:
                 allEvents = deobfuscate(f.read())
 
             allEvents += events
@@ -60,7 +58,7 @@ class WriteFile:
         if len(allEvents) > EVENT_RETENTION:
             allEvents = allEvents[0 - EVENT_RETENTION:]
 
-        with open(self.fp, "w") as f:
+        with open(self.fp, "wb") as f:
             f.write(obfuscate(allEvents))
 
         os.chmod(self.fp, 0o644) 
@@ -77,22 +75,23 @@ class Client:
         self.threadStop = threading.Event()
         self.lastEventTs = 0
 
-    def start(self):
+    def start(self, rate = 0.1, get_old_events = False):
+        self.rate = rate
         self.threadStop.clear()
         self.thread.start()
-        self.lastEventTs = time.time()
+        self.lastEventTs = 0 if get_old_events else time.time()
         self.send_event({"type": "join", "ts": time.time(), "user": self.user})
 
     def end(self):
         self.send_event({"type": "quit", "ts": time.time(), "user": self.user})
-        time.sleep(0.2)
+        time.sleep(self.rate * 1.5)
         self.threadStop.set()
         self.thread.join()
 
     def run(self):
         readStartIndex = 0
         while not self.threadStop.is_set():
-            time.sleep(0.1)
+            time.sleep(self.rate)
 
             # writing
             wEvents = []

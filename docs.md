@@ -4,6 +4,10 @@
 ## Global Functions
 
 ```
+shift(val)
+    Takes a seed value and returns a pseudo-random integer in [0, 256)
+    args: number val
+
 obfuscate(data)
     Takes any object and converts it into an obfuscated string.
     args: any type data
@@ -46,8 +50,9 @@ write(events)
 Client(username)
     args: string username
 
-start()
-    Starts the client on a new thread.
+start(rate = 0.1, get_old_events = False)
+    Starts the client on a new thread. The value of rate determines the amount of time between each read/write, in seconds. If get_old_events is set to True, the client will put every stored event into the event queue upon startup. Otherwise, it will only put events that occur after startup.
+    keyword args: number rate, bool get_old_events
 
 end()
     Ends the client thread.
