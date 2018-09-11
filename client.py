@@ -1,4 +1,4 @@
-import os, time, ujson, glob, threading, queue, math
+import os, time, json, glob, threading, queue, math, pathlib
 
 # filename prefix
 FILE_PREFIX = "chat-v1-user-"
@@ -10,7 +10,7 @@ def shift(val):
     return int((1337 * math.tan(val) % 1) * 256)
 
 def obfuscate(data):
-    obj = list(ujson.dumps(data).replace("\\/", "/").encode("utf-16"))
+    obj = list(json.dumps(data).encode("utf-8"))
     for i in range(len(obj)):
         obj[i] = (obj[i] + shift(i)) % 256
 
@@ -21,7 +21,7 @@ def deobfuscate(obj):
     for i in range(len(data)):
         data[i] = (data[i] - shift(i)) % 256
 
-    return ujson.loads(bytes(data).decode("utf-16"))
+    return json.loads(bytes(data).decode("utf-8"))
 
 class ReadFile:
 
@@ -68,6 +68,7 @@ class Client:
     def __init__(self, directory, username):
         self.user = username
         self.dir = directory
+        pathlib.Path(directory).mkdir(parents=True, exist_ok=True)
         self.wFile = WriteFile(os.path.join(self.dir, FILE_PREFIX + username))
         self.wQueue = queue.Queue()
         self.rQueue = queue.Queue()
