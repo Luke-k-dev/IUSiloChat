@@ -34,14 +34,19 @@ class ReadFile:
     def read(self):
         if os.path.isfile(self.fp):
             allEvents = False
-            while allEvents == False:
+            tries = 0
+            while allEvents == False and tries < 10:
+                tries += 1
                 with open(self.fp, "rb") as f:
                     allEvents = deobfuscate(f.read())
+
+            if allEvents == False:
+                return [{"type": "error", "ts": time.time(), "text": "Couldn't read file contents. Path: '" + self.fp + "'"},]
 
             return allEvents
 
         else:
-            return [{"type": "error", "ts": time.time(), "text": "file not found"},]
+            return [{"type": "error", "ts": time.time(), "text": "File not found."},]
 
 class WriteFile:
 
