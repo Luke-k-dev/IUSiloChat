@@ -1,34 +1,34 @@
 #!/usr/bin/env python3
 
-import os, time, json, glob, pickle, threading, queue
+import os, time, ujson, glob, threading, queue, math
 
-# file directory (end with a slash so I don't have to use os.path.join everywhere)
-DIR = "/tmp/" 
 # filename prefix
 FILE_PREFIX = "chat-v1-user-"
 # maximum number of events to store before removing old ones
 EVENT_RETENTION = 50
-# obfuscation value
-OBF_SHIFT = 34
+
+def shift(val):
+                # simple PRNG
+    return int((1337 * math.tan(val) % 1) * 256)
 
 def obfuscate(data):
-    obj = list(json.dumps(data))
+    obj = list(ujson.dumps(data))
     for i in range(len(obj)):
-        obj[i] = str(ord(obj[i]) + OBF_SHIFT) + "|"
+        obj[i] = chr((ord(obj[i]) + shift(i)) % 256)
 
-    return "".join(obj)[:-1]
+    return "".join(obj)
 
 def deobfuscate(obj):
-    obj = obj.split("|")
+    data = []
     for i in range(len(obj)):
-        obj[i] = chr(int(obj[i]) - OBF_SHIFT)
+        data.append(chr((ord(obj[i]) - shift(i)) % 256))
 
-    return json.loads("".join(obj))
+    return ujson.loads("".join(data))
 
 class ReadFile:
 
     def __init__(self, filepath):
-        self.fp = path
+        self.fp = filepath
 
     def read(self):
         if os.path.isfile(self.fp):
@@ -67,10 +67,10 @@ class WriteFile:
 
 class Client:
 
-    def __init__(self, username):
+    def __init__(self, directory, username):
         self.user = username
-        self.wFile = WriteFile(DIR + FILE_PREFIX + username)
-        self.rFiles = glob.glob(DIR + FILE_PREFIX + "*")
+        self.dir = directory
+        self.wFile = WriteFile(os.path.join(self.dir, FILE_PREFIX + username))
         self.wQueue = queue.Queue()
         self.rQueue = queue.Queue()
         self.thread = threading.Thread(target=self.run)
@@ -84,15 +84,15 @@ class Client:
         self.send_event({"type": "join", "ts": time.time(), "user": self.user})
 
     def end(self):
-        self.send_event({"type": "join", "ts": time.time(), "user": self.user})
-        time.sleep(1)
+        self.send_event({"type": "quit", "ts": time.time(), "user": self.user})
+        time.sleep(0.2)
         self.threadStop.set()
         self.thread.join()
 
     def run(self):
         readStartIndex = 0
         while not self.threadStop.is_set():
-            time.sleep(1)
+            time.sleep(0.1)
 
             # writing
             wEvents = []
@@ -102,7 +102,7 @@ class Client:
             if len(wEvents) > 0:
                 self.wFile.write(wEvents)
 
-            self.rFiles = glob.glob(DIR + FILE_PREFIX + "*")
+            self.rFiles = [ReadFile(fp) for fp in glob.glob(os.path.join(self.dir, FILE_PREFIX + "*"))]
             allEvents = []
             for rFile in self.rFiles:
                 allEvents += rFile.read()
@@ -119,14 +119,13 @@ class Client:
 
     def send_event(self, event):
         self.wQueue.put(event)
-        self.rQueue.put(event)
 
-    def send_message(self, user, text)
-        self.send_event({"type": "message", "ts": time.time(), "user": user, "text": text})
+    def send_message(self, text):
+        self.send_event({"type": "message", "ts": time.time(), "user": self.user, "text": text})
         
     def get_events(self, num = 0):
         events = []
-        while not self.rQueue.empty() and num > 0 and len(events) < num:
+        while not self.rQueue.empty() and (num == 0 or len(events) < num):
             events.append(self.rQueue.get())
         
         return sorted(events, key=lambda x: x["ts"])
